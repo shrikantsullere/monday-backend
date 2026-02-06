@@ -1,0 +1,254 @@
+/* Global Responsive Styles for Monday.com Clone */
+
+/* Base responsive utilities */
+* {
+    box-sizing: border-box;
+}
+
+/* Mobile First: Base styles for mobile devices */
+@media (max-width: 767px) {
+
+    /* App Container */
+    .app-container {
+        flex-direction: column;
+    }
+
+    /* Sidebar - Mobile */
+    .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        width: 280px;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.3s ease;
+    }
+
+    .sidebar.mobile-open {
+        left: 0;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
+
+    .sidebar-overlay.active {
+        display: block;
+    }
+
+    /* Hamburger Menu Button */
+    .hamburger-menu {
+        display: block !important;
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        z-index: 998;
+        background: #0085ff;
+        border: none;
+        padding: 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 133, 255, 0.3);
+    }
+
+    .hamburger-menu svg {
+        color: white;
+    }
+
+    /* Main Content */
+    .main-content {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    /* Topbar */
+    .topbar {
+        padding-left: 60px !important;
+    }
+
+    /* Board Header */
+    .board-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .board-title {
+        font-size: 20px !important;
+    }
+
+    .board-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .board-actions button {
+        font-size: 13px;
+        padding: 6px 12px;
+    }
+
+    /* Table */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .monday-table {
+        min-width: 800px;
+    }
+
+    .table-header-cell,
+    .table-cell {
+        min-width: 120px;
+    }
+
+    .item-name-cell {
+        position: sticky;
+        left: 0;
+        background: white;
+        z-index: 10;
+        box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Item Detail Panel - Full Screen on Mobile */
+    .item-detail-panel {
+        width: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+    }
+
+    .panel-main-layout {
+        flex-direction: column;
+    }
+
+    .panel-right-attributes {
+        width: 100% !important;
+        border-right: none;
+        border-top: 1px solid #e1e1e1;
+    }
+
+    /* Touch-friendly buttons */
+    button,
+    .nav-link,
+    .editable-cell {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Dashboard Widgets */
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+    }
+
+    /* Popovers */
+    .monday-popover {
+        max-width: 90vw !important;
+        left: 5vw !important;
+    }
+}
+
+/* Tablet: 768px - 1024px */
+@media (min-width: 768px) and (max-width: 1024px) {
+
+    /* Sidebar - Tablet */
+    .sidebar {
+        width: 70px;
+    }
+
+    .sidebar.expanded {
+        width: 260px;
+    }
+
+    .sidebar-nav span {
+        display: none;
+    }
+
+    .sidebar.expanded .sidebar-nav span {
+        display: inline;
+    }
+
+    .section-title {
+        display: none;
+    }
+
+    .sidebar.expanded .section-title {
+        display: block;
+    }
+
+    /* Item Detail Panel */
+    .item-detail-panel {
+        width: 80% !important;
+        max-width: 600px;
+    }
+
+    /* Table */
+    .table-header-cell,
+    .table-cell {
+        min-width: 100px;
+    }
+
+    /* Dashboard */
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* Desktop: > 1024px */
+@media (min-width: 1025px) {
+    .hamburger-menu {
+        display: none !important;
+    }
+
+    .sidebar-overlay {
+        display: none !important;
+    }
+
+    /* Dashboard */
+    .dashboard-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+    }
+}
+
+/* Landscape mode adjustments */
+@media (max-height: 600px) and (orientation: landscape) {
+    .item-detail-panel {
+        height: 100vh;
+    }
+
+    .panel-header {
+        padding: 16px 24px;
+    }
+
+    .content-scrollable {
+        padding: 16px;
+    }
+}
+
+/* Print styles */
+@media print {
+
+    .sidebar,
+    .topbar,
+    .board-actions,
+    .hamburger-menu {
+        display: none !important;
+    }
+
+    .main-content {
+        margin: 0;
+        width: 100%;
+    }
+
+    .monday-table {
+        page-break-inside: avoid;
+    }
+}
