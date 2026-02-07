@@ -207,7 +207,11 @@ const MainLayout = ({ children }) => {
             />
 
             <div className="layout-main">
-                <Topbar onMobileMenuClick={toggleMobileSidebar} />
+                <Topbar
+                    onMobileMenuClick={toggleMobileSidebar}
+                    unreadCount={unreadCount}
+                    onRefreshNotifications={fetchNotifications}
+                />
                 <main className="layout-content">
                     {children}
                 </main>

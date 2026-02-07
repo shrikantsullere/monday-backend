@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationsPanel from './NotificationsPanel';
 
-const Topbar = ({ onMobileMenuClick }) => {
+const Topbar = ({ onMobileMenuClick, unreadCount = 0, onRefreshNotifications }) => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
     const [showNotifications, setShowNotifications] = useState(false);
@@ -404,7 +404,7 @@ const Topbar = ({ onMobileMenuClick }) => {
                     title="Notifications"
                 >
                     <Bell size={20} />
-                    <span className="notification-badge">3</span>
+                    {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
                 </button>
 
                 <button className="icon-btn hide-mobile" title="Apps" onClick={() => handleAction('Apps marketplace coming soon!')}>
@@ -458,6 +458,7 @@ const Topbar = ({ onMobileMenuClick }) => {
                 <NotificationsPanel
                     onClose={() => setShowNotifications(false)}
                     anchorRef={bellButtonRef}
+                    onMarkAsRead={onRefreshNotifications}
                 />
             )}
         </div>

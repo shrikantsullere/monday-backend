@@ -4,54 +4,32 @@ import {
     Calendar, AlertCircle, X, Check
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { notificationService } from '../services/api';
 
 const NotificationsPanel = ({ isOpen, onClose, anchorRef }) => {
     const navigate = useNavigate();
     const panelRef = useRef(null);
 
-    const [notifications, setNotifications] = useState([
-        {
-            id: 'n1',
-            type: 'assignment',
-            title: 'Alice assigned you to',
-            itemName: 'D25-117 Desert Leisure',
-            boardId: 'board',
-            itemId: 'i1',
-            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-            read: false
-        },
-        {
-            id: 'n2',
-            type: 'comment',
-            title: 'Bob replied to your update on',
-            itemName: 'D24-668 Magnus Tech',
-            message: '"Looks great, let\'s proceed with the client review."',
-            boardId: 'board',
-            itemId: 'i2',
-            timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-            read: false
-        },
-        {
-            id: 'n3',
-            type: 'status',
-            title: 'Status changed to "Done" on',
-            itemName: 'Site Visit',
-            boardId: 'board',
-            itemId: 's1',
-            timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
-            read: true
-        },
-        {
-            id: 'n4',
-            type: 'deadline',
-            title: 'Upcoming deadline for',
-            itemName: 'D23-269 Union Coop',
-            boardId: 'board',
-            itemId: 'i3',
-            timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
-            read: false
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchNotifications();
         }
-    ]);
+    }, [isOpen]);
+
+    const fetchNotifications = async () => {
+        try {
+            setLoading(true);
+            const res = await notificationService.getNotifications();
+            setNotifications(res.data);
+        } catch (err) {
+            console.error('Failed to fetch notifications:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Close on outside click
     useEffect(() => {
@@ -74,6 +52,7 @@ const NotificationsPanel = ({ isOpen, onClose, anchorRef }) => {
             case 'comment': return <MessageCircle size={18} />;
             case 'status': return <CheckSquare size={18} />;
             case 'deadline': return <Clock size={18} />;
+            case 'system': return <AlertCircle size={18} />;
             default: return <Bell size={18} />;
         }
     };
@@ -84,43 +63,64 @@ const NotificationsPanel = ({ isOpen, onClose, anchorRef }) => {
             case 'comment': return { bg: '#f0f4ff', color: '#5559df' };
             case 'status': return { bg: '#e5ffe5', color: '#00c875' };
             case 'deadline': return { bg: '#fff0e5', color: '#fdab3d' };
+            case 'system': return { bg: '#f5f5f5', color: '#333' };
             default: return { bg: '#f5f5f5', color: '#676879' };
         }
     };
 
     const getRelativeTime = (timestamp) => {
+        if (!timestamp) return '';
+        const date = new Date(timestamp);
         const now = new Date();
-        const diff = now - timestamp;
+        const diff = now - date;
         const minutes = Math.floor(diff / 60000);
         const hours = Math.floor(diff / 3600000);
         const days = Math.floor(diff / 86400000);
 
+        if (minutes < 1) return 'Just now';
         if (minutes < 60) return `${minutes}m ago`;
         if (hours < 24) return `${hours}h ago`;
         return `${days}d ago`;
     };
 
-    const markAsRead = (id) => {
-        setNotifications(prev =>
-            prev.map(n => n.id === id ? { ...n, read: true } : n)
-        );
-    };
-
-    const markAllAsRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    };
-
-    const handleNotificationClick = (notification) => {
-        markAsRead(notification.id);
-        onClose();
-
-        // Navigate to board with item query param
-        if (notification.boardId && notification.itemId) {
-            navigate(`/${notification.boardId}?item=${notification.itemId}`);
+    const markAsRead = async (id, e) => {
+        e?.stopPropagation();
+        try {
+            await notificationService.markAsRead(id);
+            setNotifications(prev =>
+                prev.map(n => n.id === id ? { ...n, isRead: true } : n)
+            );
+        } catch (err) {
+            console.error('Failed to mark as read:', err);
         }
     };
 
-    const unreadCount = notifications.filter(n => !n.read).length;
+    const markAllAsRead = async () => {
+        try {
+            // Assuming backend supports batch update or loop through
+            // Ideally backend should have a 'mark all read' endpoint
+            // For now, loop through unread
+            const unread = notifications.filter(n => !n.isRead);
+            await Promise.all(unread.map(n => notificationService.markAsRead(n.id)));
+
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        } catch (err) {
+            console.error('Failed to mark all as read:', err);
+        }
+    };
+
+    const handleNotificationClick = async (notification) => {
+        if (!notification.isRead) {
+            markAsRead(notification.id);
+        }
+        onClose();
+
+        if (notification.link) {
+            navigate(notification.link);
+        }
+    };
+
+    const unreadCount = notifications.filter(n => !n.isRead).length;
 
     if (!isOpen) return null;
 
@@ -157,10 +157,10 @@ const NotificationsPanel = ({ isOpen, onClose, anchorRef }) => {
                         return (
                             <div
                                 key={notification.id}
-                                className={`notification-item ${!notification.read ? 'unread' : ''}`}
+                                className={`notification-item ${!notification.isRead ? 'unread' : ''}`}
                                 onClick={() => handleNotificationClick(notification)}
                             >
-                                {!notification.read && <div className="unread-indicator" />}
+                                {!notification.isRead && <div className="unread-indicator" />}
 
                                 <div
                                     className="notification-icon"
@@ -171,12 +171,9 @@ const NotificationsPanel = ({ isOpen, onClose, anchorRef }) => {
 
                                 <div className="notification-content">
                                     <div className="notification-text">
-                                        {notification.title} <strong>{notification.itemName}</strong>
+                                        {notification.content}
                                     </div>
-                                    {notification.message && (
-                                        <div className="notification-message">{notification.message}</div>
-                                    )}
-                                    <div className="notification-time">{getRelativeTime(notification.timestamp)}</div>
+                                    <div className="notification-time">{getRelativeTime(notification.createdAt)}</div>
                                 </div>
                             </div>
                         );

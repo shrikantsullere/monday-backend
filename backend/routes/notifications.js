@@ -7,7 +7,7 @@ const { Notification } = require('../models');
 router.get('/', auth, async (req, res) => {
   try {
     const notifications = await Notification.findAll({
-      where: { userId: req.user.id },
+      where: { UserId: req.user.id },
       order: [['createdAt', 'DESC']]
     });
     res.json(notifications);
@@ -20,7 +20,7 @@ router.get('/', auth, async (req, res) => {
 router.patch('/:id', auth, async (req, res) => {
   try {
     const notification = await Notification.findOne({
-      where: { id: req.params.id, userId: req.user.id }
+      where: { id: req.params.id, UserId: req.user.id }
     });
     if (!notification) return res.status(404).json({ msg: 'Notification not found' });
 
