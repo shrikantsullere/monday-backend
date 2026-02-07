@@ -10,7 +10,13 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     dialect: 'mysql',
-    logging: false
+    logging: false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
   }
 );
 
@@ -28,7 +34,9 @@ const User = sequelize.define('User', {
 const Board = sequelize.define('Board', {
   name: { type: DataTypes.STRING, allowNull: false },
   type: { type: DataTypes.STRING, defaultValue: 'board' }, // pipeline, ai-future, etc.
-  workspace: { type: DataTypes.STRING, defaultValue: 'Main Workspace' }
+  workspace: { type: DataTypes.STRING, defaultValue: 'Main Workspace' },
+  folder: { type: DataTypes.STRING, defaultValue: 'General' }, // Active Projects, Commercial, etc.
+  columns: { type: DataTypes.JSON } // Store column definitions: [{id: 'status', title: 'Status', type: 'status'}, ...]
 });
 
 const Folder = sequelize.define('Folder', {
@@ -42,13 +50,22 @@ const Group = sequelize.define('Group', {
 
 const Item = sequelize.define('Item', {
   name: { type: DataTypes.STRING, allowNull: false },
-  status: { type: DataTypes.STRING },
-  person: { type: DataTypes.STRING },
+  status: { type: DataTypes.STRING }, // Main status
+  person: { type: DataTypes.STRING }, // Legacy string field, prefer assignedToId
   timeline: { type: DataTypes.STRING },
   receivedDate: { type: DataTypes.STRING },
   progress: { type: DataTypes.INTEGER, defaultValue: 0 },
   timeTracking: { type: DataTypes.STRING, defaultValue: '00:00:00' },
-  isSubItem: { type: DataTypes.BOOLEAN, defaultValue: false }
+  payment: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.00 },
+  isSubItem: { type: DataTypes.BOOLEAN, defaultValue: false },
+  // Flexible fields
+  priority: { type: DataTypes.STRING },
+  risk: { type: DataTypes.STRING }, // Low, Medium, High
+  dealValue: { type: DataTypes.DECIMAL(10, 2) },
+  dealStatus: { type: DataTypes.STRING }, // Lead, Negotiation, etc.
+  invoiceSent: { type: DataTypes.BOOLEAN, defaultValue: false },
+  aiModel: { type: DataTypes.STRING },
+  customFields: { type: DataTypes.JSON } // For any extra data
 });
 
 const Notification = sequelize.define('Notification', {

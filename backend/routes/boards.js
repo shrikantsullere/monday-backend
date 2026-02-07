@@ -41,4 +41,18 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// @route   POST api/boards/:id/groups
+router.post('/:id/groups', auth, async (req, res) => {
+  try {
+    const group = await Group.create({
+      ...req.body,
+      BoardId: req.params.id
+    });
+    res.json(group);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+});
+
 module.exports = router;

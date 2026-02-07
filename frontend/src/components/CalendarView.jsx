@@ -8,33 +8,55 @@ const CalendarView = ({
     statusOptions
 }) => {
     const [viewMode, setViewMode] = useState('month'); // 'month' or 'week'
-    const [currentDate, setCurrentDate] = useState(new Date(2025, 9, 1)); // Default to Oct 2025 for demo
+    const [currentDate, setCurrentDate] = useState(new Date());
     const [dragOverDay, setDragOverDay] = useState(null);
 
-    // Helper: Parse 'Aug 28 - Sep 9' format
-    const parseTimeline = (timelineStr) => {
-        if (!timelineStr || timelineStr === '-') return null;
-        const parts = timelineStr.split(' - ');
-        const parseDate = (str) => {
-            const [mon, day] = str.split(' ');
-            const monthMap = { 'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5, 'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11 };
-            return new Date(2025, monthMap[mon], parseInt(day));
-        };
-        const start = parseDate(parts[0]);
-        const end = parts.length > 1 ? parseDate(parts[1]) : start;
-        return { start, end };
+    // Helper: Parse item date range from timeline or date fields
+    const parseDateRange = (item) => {
+        const currentYear = new Date().getFullYear();
+
+        // 1. Try timeline "MMM D - MMM D"
+        if (item.timeline && typeof item.timeline === 'string' && item.timeline.includes(' - ')) {
+            const parts = item.timeline.split(' - ');
+            const parsePart = (str) => {
+                const [mon, day] = str.split(' ');
+                const monthMap = { 'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5, 'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11 };
+                if (monthMap[mon] !== undefined) {
+                    return new Date(currentYear, monthMap[mon], parseInt(day));
+                }
+                return null;
+            };
+            const start = parsePart(parts[0]);
+            const end = parsePart(parts[1]);
+            if (start && end) return { start, end };
+        }
+
+        // 2. Try single date fields (YYYY-MM-DD)
+        const dateField = item.date || item.receivedDate;
+        if (dateField) {
+            const d = new Date(dateField);
+            if (!isNaN(d.getTime())) {
+                return { start: d, end: d };
+            }
+        }
+
+        return null;
     };
 
     // Helper: Format date for timeline string
     const formatTimeline = (start, end) => {
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        // If single day, returning range is still fine or simplified? 
+        // Monday uses "MMM D - MMM D" even for single day sometimes or "MMM D"
+        // Let's stick to "MMM D - MMM D" for consistency with existing Table logic
         return `${monthNames[start.getMonth()]} ${start.getDate()} - ${monthNames[end.getMonth()]} ${end.getDate()}`;
     };
 
     const calendarData = useMemo(() => {
-        const items = boardData.groups.flatMap(g => g.items.map(i => ({ ...i, groupId: g.id })));
+        const groups = boardData.Groups || boardData.groups || [];
+        const items = groups.flatMap(g => (g.items || []).map(i => ({ ...i, groupId: g.id })));
         return items.map(item => {
-            const timeline = parseTimeline(item.timeline);
+            const timeline = parseDateRange(item);
             return { ...item, parsedTimeline: timeline };
         }).filter(item => item.parsedTimeline);
     }, [boardData]);
@@ -122,7 +144,7 @@ const CalendarView = ({
                     <h2>{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
                     <div className="nav-btns">
                         <button onClick={handlePrev}><ChevronLeft size={20} /></button>
-                        <button className="today-btn" onClick={() => setCurrentDate(new Date(2025, 9, 1))}>Today</button>
+                        <button className="today-btn" onClick={() => setCurrentDate(new Date())}>Today</button>
                         <button onClick={handleNext}><ChevronRight size={20} /></button>
                     </div>
                 </div>

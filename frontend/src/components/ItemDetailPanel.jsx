@@ -16,19 +16,9 @@ const ItemDetailPanel = ({
 }) => {
     const [activeTab, setActiveTab] = React.useState('updates');
     const [updateText, setUpdateText] = React.useState('');
-    const [updates, setUpdates] = React.useState([
-        { id: 1, user: 'Mustafa', text: 'Working on the final designs for this project. @Alice check the latest files.', time: '2 hours ago', reactions: ['👍'] },
-        { id: 2, user: 'Alice', text: 'Looks great! I will review them by EOD.', time: '1 hour ago', reactions: ['🙌', '✨'] }
-    ]);
-    const [files, setFiles] = React.useState([
-        { id: 1, name: 'Project_Proposal_Draft.pdf', size: '2.4 MB', type: 'pdf', user: 'Mustafa', time: 'Jan 28, 2026' },
-        { id: 2, name: 'Main_Dashboard_Mockup.png', size: '1.8 MB', type: 'image', user: 'Alice', time: 'Jan 28, 2026', preview: true }
-    ]);
-    const [activity, setActivity] = React.useState([
-        { id: 1, user: 'Mustafa', action: 'changed Status from "Working on it" to "Done"', time: '2 hours ago' },
-        { id: 2, user: 'Alice', action: 'assigned to Deepak Pawar', time: '3 hours ago' },
-        { id: 3, user: 'System', action: 'item created', time: '5 hours ago' }
-    ]);
+    const [updates, setUpdates] = React.useState([]);
+    const [files, setFiles] = React.useState([]);
+    const [activity, setActivity] = React.useState([]);
 
     const [isUploading, setIsUploading] = React.useState(false);
     const [uploadProgress, setUploadProgress] = React.useState(0);

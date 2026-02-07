@@ -42,12 +42,18 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateUser = (updatedUserData) => {
+    localStorage.setItem(AUTH_KEY, JSON.stringify(updatedUserData));
+    setUser(updatedUserData);
+  };
+
   const value = {
     isAuthenticated: !!user,
     user,
     loading,
     login,
     logout,
+    updateUser,
   };
 
   return (

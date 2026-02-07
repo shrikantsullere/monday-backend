@@ -16,6 +16,8 @@ const MainLayout = ({ children }) => {
     const [boardFolders, setBoardFolders] = useState([]);
     const [newBoardName, setNewBoardName] = useState('');
     const [unreadCount, setUnreadCount] = useState(0);
+    const [newBoardFolder, setNewBoardFolder] = useState('Active Projects');
+    const FOLDER_OPTIONS = ['Active Projects', 'AI & Innovation', 'Commercial'];
 
     useEffect(() => {
         fetchBoards();
@@ -35,12 +37,36 @@ const MainLayout = ({ children }) => {
     const fetchBoards = async () => {
         try {
             const res = await boardService.getAllBoards();
-            // Backend returns boards, we might need to group them into folders for the UI
-            // For now, let's put them in a default folder if they aren't structured
             const boards = res.data;
-            setBoardFolders([
-                { id: 'f1', name: 'Main Workspace', boards: boards.map(b => ({ id: b.id, name: b.name })) }
-            ]);
+
+            // Group by folder
+            const foldersMap = {};
+            const folderOrder = ['Active Projects', 'AI & Innovation', 'Commercial', 'General'];
+
+            // Initialize with empty arrays to ensure order
+            folderOrder.forEach(f => {
+                foldersMap[f] = { id: f, name: f, boards: [] };
+            });
+
+            boards.forEach(board => {
+                const fName = board.folder || 'General';
+                if (!foldersMap[fName]) {
+                    foldersMap[fName] = { id: fName, name: fName, boards: [] };
+                }
+                foldersMap[fName].boards.push(board);
+            });
+
+            // Filter out empty folders if desired, or keep them. keeping them is fine.
+            const sortedFolders = Object.values(foldersMap).filter(f => f.boards.length > 0 || folderOrder.includes(f.name));
+
+            // Sort folders by predefined order
+            sortedFolders.sort((a, b) => {
+                const idxA = folderOrder.indexOf(a.name);
+                const idxB = folderOrder.indexOf(b.name);
+                return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+            });
+
+            setBoardFolders(sortedFolders);
         } catch (err) {
             console.error('Failed to fetch boards:', err);
         }
@@ -50,6 +76,7 @@ const MainLayout = ({ children }) => {
     const toggleMobileSidebar = () => setIsMobileSidebarOpen(!isMobileSidebarOpen);
     const toggleCreateModal = () => {
         setNewBoardName('');
+        setNewBoardFolder('Active Projects');
         setIsCreateModalOpen(!isCreateModalOpen);
     };
 
@@ -57,7 +84,7 @@ const MainLayout = ({ children }) => {
         if (!newBoardName.trim()) return;
 
         try {
-            await boardService.createBoard({ name: newBoardName });
+            await boardService.createBoard({ name: newBoardName, folder: newBoardFolder });
             await fetchBoards();
             toggleCreateModal();
         } catch (err) {
@@ -241,6 +268,18 @@ const MainLayout = ({ children }) => {
                                 onKeyDown={(e) => e.key === 'Enter' && handleCreateBoard()}
                                 autoFocus
                             />
+
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600 }}>Folder</label>
+                            <select
+                                value={newBoardFolder}
+                                onChange={(e) => setNewBoardFolder(e.target.value)}
+                                style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-page)', color: 'var(--text-main)', outline: 'none', marginBottom: '8px' }}
+                            >
+                                <option value="Active Projects">Active Projects</option>
+                                <option value="AI & Innovation">AI & Innovation</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="General">General</option>
+                            </select>
                         </div>
                         <div className="modal-footer">
                             <button className="btn-cancel" onClick={toggleCreateModal}>Cancel</button>

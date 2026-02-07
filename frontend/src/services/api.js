@@ -30,16 +30,23 @@ export const userService = {
   createUser: (userData) => api.post('/users', userData),
   updateUser: (id, userData) => api.put(`/users/${id}`, userData),
   deleteUser: (id) => api.delete(`/users/${id}`),
+  updateProfile: (profileData) => api.put('/users/profile', profileData),
+  changePassword: (passwordData) => api.put('/users/password', passwordData),
+  uploadAvatar: (formData) => api.post('/users/upload-avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
 };
 
 export const boardService = {
   getAllBoards: () => api.get('/boards'),
   createBoard: (boardData) => api.post('/boards', boardData),
+  createGroup: (boardId, groupData) => api.post(`/boards/${boardId}/groups`, groupData),
 };
 
 export const itemService = {
   createItem: (itemData) => api.post('/items', itemData),
   updateItem: (id, updates) => api.patch(`/items/${id}`, updates),
+  deleteItem: (id) => api.delete(`/items/${id}`),
   getMyItems: () => api.get('/items/my'),
 };
 

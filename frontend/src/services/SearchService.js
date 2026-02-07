@@ -208,10 +208,7 @@ class SearchService {
 
     // Helper to get suggested/recent (mock)
     getRecents() {
-        return [
-            { id: 'r1', title: 'SIRA Projects', type: 'board', path: '/board' },
-            { id: 'r2', title: 'Mustafa', type: 'search-term' } // Special handling for terms?
-        ];
+        return [];
     }
 }
 

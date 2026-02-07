@@ -214,7 +214,7 @@ const UsersPage = () => {
         {filteredUsers.length > 0 ? filteredUsers.map(user => (
           <div key={user.id} className="user-card">
             <div className="user-header">
-              <div className="avatar-large" style={{ background: user.role === 'Admin' ? 'var(--primary-color)' : user.role === 'Manager' ? 'var(--warning-color)' : 'var(--text-secondary)' }}>
+              <div className="avatar-large" style={{ background: user.role === 'Admin' ? 'var(--primary-color)' : 'var(--text-secondary)' }}>
                 {getAvatar(user.name)}
               </div>
               <div className="user-info-main">
@@ -321,7 +321,6 @@ const UsersPage = () => {
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   >
                     <option value="User">User</option>
-                    <option value="Manager">Manager</option>
                     <option value="Admin">Admin</option>
                   </select>
                 </div>
@@ -355,7 +354,7 @@ const UsersPage = () => {
           <div className="modal-content">
             <X className="modal-close" onClick={() => setIsViewModalOpen(false)} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>
-              <div className="avatar-large" style={{ width: '80px', height: '80px', fontSize: '28px', background: selectedUser.role === 'Admin' ? 'var(--primary-color)' : selectedUser.role === 'Manager' ? 'var(--warning-color)' : 'var(--text-secondary)' }}>
+              <div className="avatar-large" style={{ width: '80px', height: '80px', fontSize: '28px', background: selectedUser.role === 'Admin' ? 'var(--primary-color)' : 'var(--text-secondary)' }}>
                 {getAvatar(selectedUser.name)}
               </div>
               <div>

@@ -1,16 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     User, Settings, Users, Shield, Palette, Save, Plus, Trash2,
     Check, Moon, Sun, Monitor, Globe, Mail, Bell, Lock, ChevronRight,
     Loader2, Eye, EyeOff, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { userService } from '../services/api';
 
 const SettingsPage = () => {
     const { theme, toggleTheme } = useTheme();
-    const [currentUserRole, setCurrentUserRole] = useState('Admin');
+    const { user, updateUser } = useAuth();
+    const [currentUserRole, setCurrentUserRole] = useState('User');
     const [saveStatus, setSaveStatus] = useState({ show: false, type: '', message: '' });
     const [isLoading, setIsLoading] = useState(false);
+    const fileInputRef = useRef(null);
+
+    // Profile State
+    const [profileForm, setProfileForm] = useState({
+        name: '',
+        email: '',
+        avatar: '',
+        phone: '',
+        address: ''
+    });
 
     // Password state
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -21,16 +34,59 @@ const SettingsPage = () => {
         confirm: ''
     });
 
+    useEffect(() => {
+        if (user) {
+            setProfileForm({
+                name: user.name || '',
+                email: user.email || '',
+                avatar: user.avatar || '',
+                phone: user.phone || '',
+                address: user.address || ''
+            });
+            setCurrentUserRole(user.role || 'User');
+        }
+    }, [user]);
+
     const showSaveFeedback = (type, message) => {
         setSaveStatus({ show: true, type, message });
         setTimeout(() => setSaveStatus({ show: false, type: '', message: '' }), 3000);
     };
 
+    const handleAvatarClick = () => {
+        if (fileInputRef.current) fileInputRef.current.click();
+    };
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        try {
+            const res = await userService.uploadAvatar(formData);
+            setProfileForm(prev => ({ ...prev, avatar: res.data.avatarUrl }));
+            // Optional: User usually expects immediate feedback on image selection, 
+            // but we still require "Save Profile" to persist the association effectively 
+            // if we treat the form as atomic. However, uploadAvatar is separate API.
+        } catch (err) {
+            console.error(err);
+            showSaveFeedback('error', 'Failed to upload avatar');
+        }
+    };
+
     const handleSaveProfile = async () => {
         setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setIsLoading(false);
-        showSaveFeedback('success', 'Profile updated successfully!');
+        try {
+            const res = await userService.updateProfile(profileForm);
+            updateUser(res.data);
+            showSaveFeedback('success', 'Profile updated successfully!');
+        } catch (err) {
+            console.error(err);
+            showSaveFeedback('error', 'Failed to update profile');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleChangePassword = async () => {
@@ -44,10 +100,19 @@ const SettingsPage = () => {
         }
 
         setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setIsLoading(false);
-        setPasswordForm({ current: '', new: '', confirm: '' });
-        showSaveFeedback('success', 'Password changed successfully!');
+        try {
+            await userService.changePassword({
+                currentPassword: passwordForm.current,
+                newPassword: passwordForm.new
+            });
+            setPasswordForm({ current: '', new: '', confirm: '' });
+            showSaveFeedback('success', 'Password changed successfully!');
+        } catch (err) {
+            console.error(err);
+            showSaveFeedback('error', err.response?.data?.msg || 'Failed to change password');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const styles = `
@@ -147,6 +212,14 @@ const SettingsPage = () => {
         <div className="settings-container">
             <style>{styles}</style>
 
+            <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                accept="image/*"
+                onChange={handleFileChange}
+            />
+
             {/* Save Notification */}
             {saveStatus.show && (
                 <div className={`save-notification ${saveStatus.type}`}>
@@ -166,20 +239,59 @@ const SettingsPage = () => {
                     <div className="section-card">
                         <div className="section-title"><User size={24} /> Personal Profile</div>
                         <div style={{ display: 'flex', gap: '32px', alignItems: 'center', marginBottom: '40px' }}>
-                            <div style={{ width: '80px', height: '80px', background: 'var(--warning-color)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', color: '#fff', fontWeight: 'bold' }}>JD</div>
+                            <div style={{ width: '80px', height: '80px', background: 'var(--warning-color)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', color: '#fff', fontWeight: 'bold', overflow: 'hidden' }}>
+                                {profileForm.avatar ? (
+                                    <img src={profileForm.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    profileForm.name ? profileForm.name[0] : 'U'
+                                )}
+                            </div>
                             <div>
-                                <button className="btn btn-outline" style={{ marginBottom: '8px' }} onClick={() => showSaveFeedback('success', 'Profile photo dialog opened (Simulation)')}>Change Photo</button>
+                                <button className="btn btn-outline" style={{ marginBottom: '8px' }} onClick={handleAvatarClick}>Change Photo</button>
                                 <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>JPG or PNG. Max size 2MB.</div>
                             </div>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                             <div className="form-group">
                                 <label className="form-label">Full Name</label>
-                                <input className="form-input" style={{ maxWidth: '100%' }} defaultValue="John Doe" />
+                                <input
+                                    className="form-input"
+                                    style={{ maxWidth: '100%' }}
+                                    value={profileForm.name}
+                                    onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
+                                />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Email Address</label>
-                                <input className="form-input" style={{ maxWidth: '100%' }} defaultValue="john@monday.clone" readOnly />
+                                <input
+                                    className="form-input"
+                                    style={{ maxWidth: '100%' }}
+                                    value={profileForm.email}
+                                    readOnly
+                                    title="Email cannot be changed"
+                                />
+                            </div>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                            <div className="form-group">
+                                <label className="form-label">Phone</label>
+                                <input
+                                    className="form-input"
+                                    style={{ maxWidth: '100%' }}
+                                    value={profileForm.phone}
+                                    onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
+                                    placeholder="+1 (555) 000-0000"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Address</label>
+                                <input
+                                    className="form-input"
+                                    style={{ maxWidth: '100%' }}
+                                    value={profileForm.address}
+                                    onChange={e => setProfileForm({ ...profileForm, address: e.target.value })}
+                                    placeholder="City, Country"
+                                />
                             </div>
                         </div>
                         <div className="form-group">
@@ -290,5 +402,6 @@ const SettingsPage = () => {
         </div>
     );
 };
+
 
 export default SettingsPage;

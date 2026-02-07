@@ -22,7 +22,7 @@ import {
 
 const Sidebar = ({ isCollapsed, isMobileOpen, onToggle, onMobileToggle, onCreateBoard, boardFolders, unreadCount }) => {
     const location = useLocation();
-    const [openFolders, setOpenFolders] = useState(['f1', 'f2', 'f3']);
+    const [openFolders, setOpenFolders] = useState(['Active Projects', 'AI & Innovation', 'Commercial']);
 
     const toggleFolder = (folderId) => {
         setOpenFolders(prev =>
@@ -115,27 +115,26 @@ const Sidebar = ({ isCollapsed, isMobileOpen, onToggle, onMobileToggle, onCreate
         }
 
         .section-label {
-            padding: 0 20px 8px;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-muted);
+            padding: 16px 20px 12px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #fff;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
             display: ${isCollapsed ? 'none' : 'block'};
         }
 
         .sidebar-item {
             display: flex;
             align-items: center;
-            padding: 8px 20px;
-            color: var(--sidebar-text);
+            padding: 10px 20px;
+            color: #abb4be;
             text-decoration: none;
             gap: 12px;
             font-size: 14px;
             font-weight: 500;
             transition: all 0.2s;
             cursor: pointer;
-            border-left: 3px solid transparent;
         }
 
         .sidebar-item:hover {
@@ -144,38 +143,38 @@ const Sidebar = ({ isCollapsed, isMobileOpen, onToggle, onMobileToggle, onCreate
         }
 
         .sidebar-item.active {
-            background: var(--sidebar-active-bg);
-            color: var(--primary-color);
-            border-left-color: var(--primary-color);
+            background: #1b212c;
+            color: #0085ff;
         }
 
         .folder-item {
             display: flex;
             align-items: center;
             padding: 8px 12px 8px 20px;
-            color: var(--sidebar-text);
+            color: #fff;
             cursor: pointer;
-            gap: 8px;
+            gap: 10px;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .folder-item:hover {
-            color: #fff;
+            background: rgba(255,255,255,0.05);
         }
 
         .folder-content {
-            padding-left: 12px;
+            padding-left: 0;
         }
 
         .board-item {
             display: flex;
             align-items: center;
-            padding: 6px 20px 6px 32px;
-            color: var(--sidebar-text);
+            padding: 8px 20px 8px 48px;
+            color: #abb4be;
             text-decoration: none;
-            gap: 10px;
-            font-size: 13px;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 500;
             transition: all 0.2s;
         }
 
@@ -185,8 +184,8 @@ const Sidebar = ({ isCollapsed, isMobileOpen, onToggle, onMobileToggle, onCreate
         }
 
         .board-item.active {
-            background: var(--sidebar-active-bg);
-            color: var(--primary-color);
+            background: #1b212c;
+            color: #0085ff;
         }
 
         .create-btn-container {
@@ -341,37 +340,40 @@ const Sidebar = ({ isCollapsed, isMobileOpen, onToggle, onMobileToggle, onCreate
                 </div>
 
                 <div className="nav-section">
+                    <div className="section-label" style={{ paddingLeft: '20px', display: isCollapsed ? 'none' : 'block' }}>
+                        Main Workspace
+                    </div>
                     {!isCollapsed && boardFolders?.map(folder => (
                         <div key={folder.id} className="folder-container">
                             <div className="folder-item" onClick={() => toggleFolder(folder.id)}>
-                                {openFolders.includes(folder.id) ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                                <Folder size={18} fill={openFolders.includes(folder.id) ? "var(--warning-color)" : "transparent"} color="var(--warning-color)" />
+                                {openFolders.includes(folder.id) ? <ChevronDown size={14} color="#fff" /> : <ChevronRight size={14} color="#fff" />}
+                                <Folder size={18} fill="#ffcb00" color="#ffcb00" />
                                 <span>{folder.name}</span>
                             </div>
                             {openFolders.includes(folder.id) && (
                                 <div className="folder-content">
                                     {folder.boards.map(board => (
                                         <NavLink
-                                            key={typeof board === 'string' ? board : board.id}
-                                            to={getBoardPath(board)}
+                                            key={board.id}
+                                            to={getBoardPath(board.name || board)}
                                             className={({ isActive }) => `board-item ${isActive ? 'active' : ''}`}
                                             onClick={handleLinkClick}
                                         >
-                                            <Layout size={16} color="#00d1d1" />
-                                            <span>{typeof board === 'string' ? board : board.name}</span>
+                                            <LayoutDashboard size={18} color="#00d1d1" />
+                                            <span>{board.name}</span>
                                         </NavLink>
                                     ))}
                                 </div>
                             )}
                         </div>
                     ))}
-                    {isCollapsed && (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                            <Folder size={20} color="var(--warning-color)" />
-                            <Folder size={20} color="var(--warning-color)" />
-                            <Folder size={20} color="var(--warning-color)" />
+                    {isCollapsed && boardFolders?.map(folder => (
+                        <div key={folder.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <div title={folder.name}>
+                                <Folder size={20} color="#ffcb00" fill="#ffcb00" />
+                            </div>
                         </div>
-                    )}
+                    ))}
                 </div>
 
                 <div className="nav-section">
