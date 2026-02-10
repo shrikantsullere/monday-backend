@@ -1,23 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Layout, LayoutDashboard, Loader2, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { searchService } from '../services/api';
 
 const SearchPage = () => {
     const navigate = useNavigate();
-    const [query, setQuery] = useState('');
-    const [results, setResults] = useState({ boards: [], items: [] });
+    const [searchParams] = useSearchParams();
+    const [query, setQuery] = useState(searchParams.get('q') || '');
+    const [results, setResults] = useState({ boards: [], items: [], users: [] });
     const [isSearching, setIsSearching] = useState(false);
-
-    const handleSearch = async (e) => {
-        const val = e.target.value;
-        setQuery(val);
-
-        if (val.length < 2) {
-            setResults({ boards: [], items: [] });
-            return;
-        }
-
+    const performSearch = async (val) => {
         setIsSearching(true);
         try {
             const res = await searchService.search(val);
@@ -27,6 +19,26 @@ const SearchPage = () => {
         } finally {
             setIsSearching(false);
         }
+    };
+
+    useEffect(() => {
+        const urlQuery = searchParams.get('q');
+        if (urlQuery) {
+            setQuery(urlQuery);
+            performSearch(urlQuery);
+        }
+    }, [searchParams]);
+
+    const handleSearch = async (e) => {
+        const val = e.target.value;
+        setQuery(val);
+
+        if (val.length < 2) {
+            setResults({ boards: [], items: [], users: [] });
+            return;
+        }
+
+        performSearch(val);
     };
 
     const styles = `
@@ -40,6 +52,7 @@ const SearchPage = () => {
         .result-card { background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
         .result-card:hover { border-color: var(--primary-color); transform: translateX(8px); }
         .icon-box { width: 40px; height: 40px; border-radius: 8px; background: var(--bg-hover); display: flex; align-items: center; justify-content: center; color: var(--primary-color); }
+        .avatar-box { width: 40px; height: 40px; border-radius: 50%; background: var(--warning-color); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; overflow: hidden; }
         .result-info h4 { margin: 0; font-size: 16px; }
         .result-info p { margin: 4px 0 0 0; color: var(--text-secondary); font-size: 13px; }
     `;
@@ -54,7 +67,7 @@ const SearchPage = () => {
                 <Search size={24} />
                 <input
                     type="text"
-                    placeholder="Search by name..."
+                    placeholder="Search by name, board, or person..."
                     value={query}
                     onChange={handleSearch}
                     autoFocus
@@ -62,15 +75,37 @@ const SearchPage = () => {
                 {isSearching && <Loader2 size={20} className="spin" style={{ position: 'absolute', right: 16, top: '50%', marginTop: -10 }} color="var(--primary-color)" />}
             </div>
 
+            {results.users && results.users.length > 0 && (
+                <div className="results-section">
+                    <div className="section-title">People</div>
+                    {results.users.map(user => (
+                        <div key={user.id} className="result-card" onClick={() => navigate('/users')}>
+                            <div className="avatar-box">
+                                {user.avatar ? (
+                                    <img src={user.avatar} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    user.name[0]
+                                )}
+                            </div>
+                            <div className="result-info">
+                                <h4>{user.name}</h4>
+                                <p>{user.email} • {user.role}</p>
+                            </div>
+                            <ArrowRight size={18} style={{ marginLeft: 'auto', opacity: 0.3 }} />
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {results.boards.length > 0 && (
                 <div className="results-section">
-                    <div className="section-title">Boards</div>
+                    <div className="section-title">Boards (Projects)</div>
                     {results.boards.map(board => (
                         <div key={board.id} className="result-card" onClick={() => navigate(`/board/${board.id}`)}>
                             <div className="icon-box"><LayoutDashboard size={20} /></div>
                             <div className="result-info">
                                 <h4>{board.name}</h4>
-                                <p>{board.workspace}</p>
+                                <p>{board.workspace || 'Main Workspace'}</p>
                             </div>
                             <ArrowRight size={18} style={{ marginLeft: 'auto', opacity: 0.3 }} />
                         </div>
@@ -94,7 +129,7 @@ const SearchPage = () => {
                 </div>
             )}
 
-            {!isSearching && query.length >= 2 && results.boards.length === 0 && results.items.length === 0 && (
+            {!isSearching && query.length >= 2 && results.boards.length === 0 && results.items.length === 0 && (results.users?.length || 0) === 0 && (
                 <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
                     No results found for "{query}"
                 </div>

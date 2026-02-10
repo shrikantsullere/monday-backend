@@ -29,7 +29,10 @@ import {
 } from 'recharts';
 import { boardService } from '../services/api';
 
+import { useAuth } from '../context/AuthContext';
 const Dashboard = ({ boardData: singleBoardData }) => {
+    const { user: currentUser } = useAuth();
+    const isAdmin = currentUser?.role === 'Admin';
     const [isLoading, setIsLoading] = useState(!singleBoardData);
     const [allBoards, setAllBoards] = useState(singleBoardData ? [singleBoardData] : []);
     const [filter, setFilter] = useState('all');
@@ -69,6 +72,11 @@ const Dashboard = ({ boardData: singleBoardData }) => {
             groups.forEach(group => {
                 const items = group.items || group.Items || [];
                 items.forEach(item => {
+                    // Strict task isolation: Filter for Users, allow Admins to see all
+                    if (currentUser?.role !== 'Admin' && item.assignedToId !== currentUser?.id) {
+                        return;
+                    }
+
                     totalTasks++;
                     const status = (item.status || '').toLowerCase();
                     if (status.includes('done') || status.includes('won') || status.includes('closed') || status === 'production') {
@@ -88,15 +96,21 @@ const Dashboard = ({ boardData: singleBoardData }) => {
             });
         });
 
+        // For everyone, totalBoards is just boards where they have tasks (Admins see all)
+        const relevantBoardsCount = (currentUser?.role === 'Admin') ? allBoards.length : allBoards.filter(b => {
+            const gs = b.Groups || b.groups || [];
+            return gs.some(g => (g.items || g.Items || []).some(i => i.assignedToId === currentUser?.id));
+        }).length;
+
         return {
-            totalBoards: allBoards.length,
+            totalBoards: relevantBoardsCount,
             totalTasks,
             completedTasks,
             activeTasks,
             userWorkload: Object.entries(userWorkload).map(([name, count]) => ({ name, count })),
             statusData: Object.entries(statusCounts).map(([name, value]) => ({ name, value }))
         };
-    }, [allBoards]);
+    }, [allBoards, currentUser]);
 
     const progressData = useMemo(() => {
         return allBoards.map(board => {
@@ -106,6 +120,11 @@ const Dashboard = ({ boardData: singleBoardData }) => {
             groups.forEach(group => {
                 const items = group.items || group.Items || [];
                 items.forEach(item => {
+                    // Strict isolation: Filter for users, allow Admins to see all
+                    if (currentUser?.role !== 'Admin' && item.assignedToId !== currentUser?.id) {
+                        return;
+                    }
+
                     total++;
                     const status = (item.status || '').toLowerCase();
                     if (status.includes('done') || status.includes('won') || status.includes('closed') || status === 'production') {
@@ -113,12 +132,13 @@ const Dashboard = ({ boardData: singleBoardData }) => {
                     }
                 });
             });
+            if (currentUser?.role !== 'Admin' && total === 0) return null; // Hide boards with no tasks for regular user
             return {
                 name: (board.name || board.boardName || '').split(' ')[0],
                 progress: total > 0 ? Math.round((done / total) * 100) : 0
             };
-        });
-    }, [allBoards]);
+        }).filter(Boolean);
+    }, [allBoards, currentUser]);
 
     const displayStats = importedSnapshot || stats;
     const displayProgressData = importedSnapshot?.progressData ?? progressData;
@@ -126,15 +146,24 @@ const Dashboard = ({ boardData: singleBoardData }) => {
 
     const dashboardStyles = `
         .dashboard-container { padding: 24px; background: var(--bg-page); min-height: 100%; color: var(--text-main); }
-        .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .dashboard-header h1 { font-size: 24px; margin: 0; color: var(--text-main); font-weight: 700; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 24px; }
-        .stat-card { background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 16px; }
-        .stat-info h4 { margin: 0; font-size: 14px; color: var(--text-secondary); }
-        .stat-info .stat-value { font-size: 24px; font-weight: 700; color: var(--text-main); }
-        .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px; }
-        .chart-card { background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); height: 350px; }
-        @media (max-width: 768px) { .charts-row { grid-template-columns: 1fr; } }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-direction: column; gap: 8px; }
+        .dashboard-header h1 { font-size: 24px; margin: 0; color: var(--text-main); font-weight: 700; width: 100%; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--bg-card); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 16px; }
+        .stat-info h4 { margin: 0; font-size: 13px; color: var(--text-secondary); }
+        .stat-info .stat-value { font-size: 20px; font-weight: 700; color: var(--text-main); }
+        .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 40px; }
+        .chart-card { background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); height: 350px; min-width: 0; }
+        
+        @media (max-width: 1024px) {
+            .charts-row { grid-template-columns: 1fr; }
+            .chart-card { height: 300px; }
+        }
+        @media (max-width: 600px) {
+            .dashboard-container { padding: 16px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .dashboard-header h1 { font-size: 20px; }
+        }
     `;
 
     if (isLoading) {
@@ -150,18 +179,23 @@ const Dashboard = ({ boardData: singleBoardData }) => {
             <style>{dashboardStyles}</style>
 
             <header className="dashboard-header">
-                <h1>{singleBoardData ? `${singleBoardData.name} Insights` : 'Insights Dashboard'}</h1>
+                <h1>{singleBoardData ? `${singleBoardData.name} Insights` : (isAdmin ? 'Master Insights Dashboard' : `Welcome, ${currentUser?.name?.split(' ')[0] || 'User'}`)}</h1>
+                {!singleBoardData && (
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>
+                        {isAdmin ? 'Overview of all work across the workspace' : 'Here is a breakdown of your personal performance and assigned tasks.'}
+                    </p>
+                )}
             </header>
 
             <div className="stats-grid">
                 <div className="stat-card">
-                    <div className="stat-info"><h4>{singleBoardData ? 'Items' : 'Total Boards'}</h4><div className="stat-value">{singleBoardData ? stats.totalTasks : stats.totalBoards}</div></div>
+                    <div className="stat-info"><h4>{singleBoardData ? 'Items' : (isAdmin ? 'Total Boards' : 'Assigned Boards')}</h4><div className="stat-value">{singleBoardData ? stats.totalTasks : stats.totalBoards}</div></div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-info"><h4>Active Tasks</h4><div className="stat-value">{displayStats.activeTasks}</div></div>
+                    <div className="stat-info"><h4>{isAdmin ? 'Active Tasks' : 'My Active Tasks'}</h4><div className="stat-value">{displayStats.activeTasks}</div></div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-info"><h4>Completed</h4><div className="stat-value">{displayStats.completedTasks}</div></div>
+                    <div className="stat-info"><h4>{isAdmin ? 'Completed' : 'My Completed'}</h4><div className="stat-value">{displayStats.completedTasks}</div></div>
                 </div>
             </div>
 

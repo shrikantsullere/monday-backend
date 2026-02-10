@@ -230,7 +230,9 @@ const UsersPage = () => {
             <div className="user-details">
               <div className="detail-item"><Mail size={16} /> {user.email}</div>
               <div className="detail-item"><Phone size={16} /> {user.phone || 'N/A'}</div>
-              <div className="detail-item"><MapPin size={16} /> {user.address || 'N/A'}</div>
+              <div className="detail-item" style={{ color: 'var(--primary-color)', fontWeight: 600 }}>
+                <Shield size={16} /> {(user.Items || []).length} Tasks Assigned
+              </div>
             </div>
 
             <div className="card-actions">
@@ -387,6 +389,27 @@ const UsersPage = () => {
               <div className="view-detail-row">
                 <div className="view-detail-label">User ID</div>
                 <div className="view-detail-value">#{selectedUser.id}</div>
+              </div>
+
+              <div style={{ marginTop: '24px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Shield size={18} color="var(--primary-color)" /> Assigned Tasks ({(selectedUser.Items || []).length})
+                </h3>
+                <div style={{ display: 'grid', gap: '10px' }}>
+                  {(selectedUser.Items || []).map(item => (
+                    <div key={item.id} style={{ padding: '12px', background: 'var(--bg-hover)', borderRadius: '6px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontWeight: 500 }}>{item.name}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                        {item.Group?.Board?.name} • <span style={{ color: 'var(--primary-color)' }}>{item.status}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {(!selectedUser.Items || selectedUser.Items.length === 0) && (
+                    <div style={{ padding: '20px', textAlign: 'center', background: 'var(--bg-hover)', borderRadius: '6px', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                      No tasks assigned to this user.
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

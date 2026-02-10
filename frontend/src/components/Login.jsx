@@ -260,11 +260,6 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="login-hint">
-          <strong>Default Credentials:</strong><br />
-          Email: <code>admin@monday.com</code><br />
-          Password: <code>admin123</code>
-        </div>
       </div>
     </div>
   );

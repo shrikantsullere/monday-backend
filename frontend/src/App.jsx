@@ -48,6 +48,7 @@ function ProtectedRoutes() {
         <Route path="/my-work" element={<MyWork />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/automations" element={<Automations />} />
+        <Route path="/team-tasks" element={<Board isTeamView={true} />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </MainLayout>
@@ -55,17 +56,17 @@ function ProtectedRoutes() {
 }
 
 function App() {
-  const { isAuthenticated } = useAuth();
-  const location = useLocation();
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <Routes>
-      <Route path="/login" element={
-        isAuthenticated
-          ? <Navigate to={location.state?.from?.pathname || '/dashboard'} replace />
-          : <Login />
-      } />
+      <Route path="/login" element={<Login />} />
       <Route path="/*" element={<ProtectedRoutes />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

@@ -78,11 +78,12 @@ const FileCenter = () => {
 
     const styles = `
         .file-center { padding: 48px; background: var(--bg-page); min-height: 100%; color: var(--text-main); }
-        .file-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .file-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; gap: 20px; }
         .file-actions { display: flex; gap: 12px; }
-        .search-field { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-color); border-radius: 4px; padding: 6px 12px; background: var(--bg-card); }
-        .search-field input { border: none; outline: none; background: transparent; color: inherit; width: 250px; }
-        .upload-btn { background: var(--primary-color); color: white; border: none; padding: 8px 16px; border-radius: 4px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; transition: opacity 0.2s; }
+        .search-field { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-color); border-radius: 4px; padding: 6px 12px; background: var(--bg-card); transition: border-color 0.2s; }
+        .search-field:focus-within { border-color: var(--primary-color); }
+        .search-field input { border: none; outline: none; background: transparent; color: inherit; width: 250px; font-size: 14px; }
+        .upload-btn { background: var(--primary-color); color: white; border: none; padding: 8px 16px; border-radius: 4px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; transition: opacity 0.2s; white-space: nowrap; height: 36px; }
         .upload-btn:hover { opacity: 0.9; }
         .upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; }
@@ -92,12 +93,23 @@ const FileCenter = () => {
         .file-preview img { width: 100%; height: 100%; object-fit: cover; }
         .file-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); opacity: 0; display: flex; align-items: center; justify-content: center; gap: 12px; transition: opacity 0.2s; }
         .file-card:hover .file-overlay { opacity: 1; }
-        .overlay-icon { width: 36px; height: 36px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-main); transition: transform 0.2s; }
+        .overlay-icon { width: 36px; height: 36px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-main); transition: transform 0.2s; border: none; cursor: pointer; }
         .overlay-icon:hover { transform: scale(1.1); }
         .overlay-icon.delete { color: var(--danger-color); }
         .file-info { padding: 16px; }
         .file-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .file-meta { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        @media (max-width: 768px) {
+            .file-center { padding: 24px 16px; }
+            .file-header { flex-direction: column; align-items: stretch; margin-bottom: 24px; }
+            .file-actions { flex-direction: column; }
+            .search-field { width: 100%; }
+            .search-field input { width: 100%; }
+            .upload-btn { width: 100%; justify-content: center; }
+            .file-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+            .header h1 { font-size: 24px; }
+        }
     `;
 
     if (isLoading) {

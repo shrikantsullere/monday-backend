@@ -159,11 +159,11 @@ const SettingsPage = () => {
         .btn-outline:hover { background: var(--bg-hover); }
         
         .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        .theme-card { border: 2px solid var(--border-color); border-radius: 8px; padding: 20px; cursor: pointer; text-align: center; transition: all 0.2s; background: var(--bg-card); color: var(--text-main); }
-        .theme-card:hover { border-color: var(--primary-color); }
-        .theme-card.active { border-color: var(--primary-color); background: rgba(0, 133, 255, 0.05); }
-        .theme-preview { height: 60px; border-radius: 4px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid var(--border-color); }
-        
+        .theme-card { border: 2px solid var(--border-color); border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); background: var(--bg-card); color: var(--text-main); position: relative; }
+        .theme-card:hover { border-color: var(--primary-color); transform: translateY(-2px); }
+        .theme-card.active { border-color: var(--primary-color); background: var(--bg-card); box-shadow: 0 8px 20px rgba(0, 133, 255, 0.15); }
+        .theme-preview { height: 100px; border-radius: 8px; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color); }
+    
         .save-notification {
             position: fixed;
             top: 80px;
@@ -267,8 +267,7 @@ const SettingsPage = () => {
                                     className="form-input"
                                     style={{ maxWidth: '100%' }}
                                     value={profileForm.email}
-                                    readOnly
-                                    title="Email cannot be changed"
+                                    onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
                                 />
                             </div>
                         </div>
@@ -376,24 +375,54 @@ const SettingsPage = () => {
                     {/* Appearance Section */}
                     <div className="section-card">
                         <div className="section-title"><Palette size={24} /> Appearance</div>
-                        <div className="theme-grid">
-                            <div className={`theme-card ${theme === 'light' ? 'active' : ''}`} onClick={() => toggleTheme('light')}>
-                                <div className="theme-preview" style={{ background: '#fff' }}>
-                                    <Sun size={24} color="#0085ff" />
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '20px' }}>
+                            Choose your preferred interface style.
+                        </p>
+                        <div className="theme-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+                            <div
+                                className={`theme-card ${theme === 'light' ? 'active' : ''}`}
+                                onClick={() => toggleTheme('light')}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    padding: '16px',
+                                    gap: '12px'
+                                }}
+                            >
+                                <div className="theme-preview" style={{ background: '#f8f9fb', position: 'relative', height: '100px' }}>
+                                    <div style={{ width: '40px', height: '40px', background: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                                        <Sun size={20} color="#0085ff" />
+                                    </div>
+                                    {theme === 'light' && (
+                                        <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'var(--primary-color)', color: '#fff', borderRadius: '50%', padding: '2px' }}>
+                                            <Check size={12} strokeWidth={3} />
+                                        </div>
+                                    )}
                                 </div>
-                                <div style={{ fontWeight: 600 }}>Light Mode</div>
+                                <div style={{ fontWeight: 600, fontSize: '15px' }}>Light Mode</div>
                             </div>
-                            <div className={`theme-card ${theme === 'dark' ? 'active' : ''}`} onClick={() => toggleTheme('dark')}>
-                                <div className="theme-preview" style={{ background: '#1c222d' }}>
-                                    <Moon size={24} color="#fff" />
+
+                            <div
+                                className={`theme-card ${theme === 'dark' ? 'active' : ''}`}
+                                onClick={() => toggleTheme('dark')}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    padding: '16px',
+                                    gap: '12px'
+                                }}
+                            >
+                                <div className="theme-preview" style={{ background: '#1c222d', position: 'relative', height: '100px' }}>
+                                    <div style={{ width: '40px', height: '40px', background: '#2b3445', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                                        <Moon size={20} color="#fff" />
+                                    </div>
+                                    {theme === 'dark' && (
+                                        <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'var(--primary-color)', color: '#fff', borderRadius: '50%', padding: '2px' }}>
+                                            <Check size={12} strokeWidth={3} />
+                                        </div>
+                                    )}
                                 </div>
-                                <div style={{ fontWeight: 600 }}>Dark Mode</div>
-                            </div>
-                            <div className={`theme-card ${theme === 'system' ? 'active' : ''}`} onClick={() => toggleTheme('light')}>
-                                <div className="theme-preview" style={{ background: 'linear-gradient(90deg, #fff 50%, #1c222d 50%)' }}>
-                                    <Monitor size={24} color="#333" />
-                                </div>
-                                <div style={{ fontWeight: 600 }}>System</div>
+                                <div style={{ fontWeight: 600, fontSize: '15px' }}>Dark Mode</div>
                             </div>
                         </div>
                     </div>

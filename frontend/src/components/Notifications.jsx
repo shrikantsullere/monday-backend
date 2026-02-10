@@ -31,17 +31,42 @@ const Notifications = () => {
     };
 
     const styles = `
-        .notifications-container { padding: 48px; background: var(--bg-card); height: 100%; overflow-y: auto; color: var(--text-main); }
+        .notifications-container { padding: 40px; background: var(--bg-card); height: 100%; overflow-y: auto; color: var(--text-main); }
         .header { border-bottom: 1px solid var(--border-color); padding-bottom: 24px; margin-bottom: 24px; }
         .header h1 { font-size: 24px; display: flex; align-items: center; gap: 12px; }
         .notification-list { max-width: 800px; }
-        .notification-item { padding: 20px 0; border-bottom: 1px solid var(--border-color); display: flex; gap: 16px; position: relative; }
+        .notification-item { padding: 16px 0; border-bottom: 1px solid var(--border-color); display: flex; gap: 16px; position: relative; }
         .notification-item.unread { background: rgba(0, 133, 255, 0.03); }
         .icon-circle { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-hover); display: flex; align-items: center; justify-content: center; color: var(--primary-color); flex-shrink: 0; }
+        .content { flex: 1; min-width: 0; }
         .content b { color: var(--text-main); }
-        .content p { margin: 4px 0 0 0; color: var(--text-secondary); font-size: 14px; }
-        .time { color: var(--text-muted); font-size: 12px; margin-top: 8px; display: block; }
-        .read-badge { position: absolute; right: 0; top: 20px; font-size: 11px; color: var(--primary-color); cursor: pointer; }
+        .content p { margin: 0; color: var(--text-main); font-size: 14px; line-height: 1.5; word-wrap: break-word; }
+        .time { color: var(--text-muted); font-size: 12px; margin-top: 6px; display: block; }
+        .read-badge { 
+            font-size: 11px; 
+            color: var(--primary-color); 
+            cursor: pointer; 
+            padding: 4px 8px;
+            background: rgba(0, 133, 255, 0.1);
+            border-radius: 4px;
+            white-space: nowrap;
+            height: fit-content;
+        }
+
+        @media (max-width: 600px) {
+            .notifications-container { padding: 20px 16px; }
+            .notification-item { padding: 12px 0; }
+            .icon-circle { width: 32px; height: 32px; }
+            .header h1 { font-size: 20px; }
+            .notification-item { position: relative; flex-direction: column; gap: 8px; }
+            .notification-row { display: flex; gap: 12px; width: 100%; }
+            .read-badge { align-self: flex-start; margin-left: 44px; }
+            .hide-mobile { display: none; }
+            .show-mobile-only { display: block; }
+        }
+        @media (min-width: 601px) {
+            .show-mobile-only { display: none; }
+        }
     `;
 
     if (isLoading) {
@@ -63,13 +88,20 @@ const Notifications = () => {
                 {notifications.length > 0 ? (
                     notifications.map(n => (
                         <div key={n.id} className={`notification-item ${!n.isRead ? 'unread' : ''}`}>
-                            <div className="icon-circle"><Bell size={20} /></div>
-                            <div className="content">
-                                <p>{n.content}</p>
-                                <span className="time">{new Date(n.createdAt).toLocaleString()}</span>
+                            <div className="notification-row">
+                                <div className="icon-circle"><Bell size={20} /></div>
+                                <div className="content">
+                                    <p>{n.content}</p>
+                                    <span className="time">{new Date(n.createdAt).toLocaleString()}</span>
+                                </div>
+                                {!n.isRead && (
+                                    <div className="read-badge hide-mobile" onClick={() => handleMarkAsRead(n.id)}>
+                                        Mark as read
+                                    </div>
+                                )}
                             </div>
                             {!n.isRead && (
-                                <div className="read-badge" onClick={() => handleMarkAsRead(n.id)}>
+                                <div className="read-badge show-mobile-only" onClick={() => handleMarkAsRead(n.id)}>
                                     Mark as read
                                 </div>
                             )}

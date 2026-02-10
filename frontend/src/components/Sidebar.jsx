@@ -17,12 +17,14 @@ import {
     LayoutDashboard,
     File,
     Zap,
-    X as CloseIcon
+    X as CloseIcon,
+    User
 } from 'lucide-react';
 
-const Sidebar = ({ isCollapsed, isMobileOpen, onToggle, onMobileToggle, onCreateBoard, boardFolders, unreadCount }) => {
+const Sidebar = ({ isCollapsed, isMobileOpen, onToggle, onMobileToggle, onCreateBoard, boardFolders, unreadCount, user }) => {
     const location = useLocation();
     const [openFolders, setOpenFolders] = useState(['Active Projects', 'AI & Innovation', 'Commercial']);
+    const isAdmin = user?.role === 'Admin';
 
     const toggleFolder = (folderId) => {
         setOpenFolders(prev =>
@@ -33,7 +35,6 @@ const Sidebar = ({ isCollapsed, isMobileOpen, onToggle, onMobileToggle, onCreate
     };
 
     const handleLinkClick = () => {
-        // Close mobile sidebar when a link is clicked
         if (window.innerWidth <= 768) {
             onMobileToggle();
         }
@@ -227,7 +228,6 @@ const Sidebar = ({ isCollapsed, isMobileOpen, onToggle, onMobileToggle, onCreate
             margin-left: auto;
         }
 
-        /* Mobile responsive styles */
         @media (max-width: 768px) {
             .sidebar-container {
                 position: fixed;
@@ -237,18 +237,9 @@ const Sidebar = ({ isCollapsed, isMobileOpen, onToggle, onMobileToggle, onCreate
                 box-shadow: ${isMobileOpen ? '2px 0 8px rgba(0,0,0,0.5)' : 'none'};
                 background-color: var(--bg-sidebar);
             }
-            
-            .collapse-trigger { 
-                display: none; 
-            }
-
-            .mobile-close-btn {
-                display: block;
-            }
-
-            .sidebar-header {
-                justify-content: space-between;
-            }
+            .collapse-trigger { display: none; }
+            .mobile-close-btn { display: block; }
+            .sidebar-header { justify-content: space-between; }
         }
     `;
 
@@ -315,106 +306,114 @@ const Sidebar = ({ isCollapsed, isMobileOpen, onToggle, onMobileToggle, onCreate
                             </>
                         )}
                     </NavLink>
-                    <NavLink
-                        to="/search"
-                        className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-                        onClick={handleLinkClick}
-                    >
-                        <Search size={20} />
-                        {!isCollapsed && <span>Search Everything</span>}
-                    </NavLink>
+
+                    {!isAdmin && (
+                        <NavLink
+                            to="/settings"
+                            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+                            onClick={handleLinkClick}
+                        >
+                            <User size={20} />
+                            {!isCollapsed && <span>Profile</span>}
+                        </NavLink>
+                    )}
+
+                    {isAdmin && (
+                        <NavLink
+                            to="/search"
+                            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+                            onClick={handleLinkClick}
+                        >
+                            <Search size={20} />
+                            {!isCollapsed && <span>Search Everything</span>}
+                        </NavLink>
+                    )}
                 </div>
 
-                {!isCollapsed && (
-                    <div className="create-btn-container">
-                        <button className="create-board-btn" onClick={onCreateBoard}>
-                            <Plus size={18} />
-                            <span>Create New Board</span>
-                        </button>
-                    </div>
-                )}
-
-                <div className="nav-section">
-                    <div className="section-label">Favorites</div>
-                    {/* Favorites content could go here */}
-                </div>
-
-                <div className="nav-section">
-                    <div className="section-label" style={{ paddingLeft: '20px', display: isCollapsed ? 'none' : 'block' }}>
-                        Main Workspace
-                    </div>
-                    {!isCollapsed && boardFolders?.map(folder => (
-                        <div key={folder.id} className="folder-container">
-                            <div className="folder-item" onClick={() => toggleFolder(folder.id)}>
-                                {openFolders.includes(folder.id) ? <ChevronDown size={14} color="#fff" /> : <ChevronRight size={14} color="#fff" />}
-                                <Folder size={18} fill="#ffcb00" color="#ffcb00" />
-                                <span>{folder.name}</span>
+                {isAdmin && (
+                    <>
+                        {!isCollapsed && (
+                            <div className="create-btn-container">
+                                <button className="create-board-btn" onClick={onCreateBoard}>
+                                    <Plus size={18} />
+                                    <span>Create New Board</span>
+                                </button>
                             </div>
-                            {openFolders.includes(folder.id) && (
-                                <div className="folder-content">
-                                    {folder.boards.map(board => (
-                                        <NavLink
-                                            key={board.id}
-                                            to={getBoardPath(board.name || board)}
-                                            className={({ isActive }) => `board-item ${isActive ? 'active' : ''}`}
-                                            onClick={handleLinkClick}
-                                        >
-                                            <LayoutDashboard size={18} color="#00d1d1" />
-                                            <span>{board.name}</span>
-                                        </NavLink>
-                                    ))}
+                        )}
+
+                        <div className="nav-section">
+                            <div className="section-label" style={{ paddingLeft: '20px', display: isCollapsed ? 'none' : 'block' }}>
+                                Main Workspace
+                            </div>
+                            {!isCollapsed && boardFolders?.map(folder => (
+                                <div key={folder.id} className="folder-container">
+                                    <div className="folder-item" onClick={() => toggleFolder(folder.id)}>
+                                        {openFolders.includes(folder.id) ? <ChevronDown size={14} color="#fff" /> : <ChevronRight size={14} color="#fff" />}
+                                        <Folder size={18} fill="#ffcb00" color="#ffcb00" />
+                                        <span>{folder.name}</span>
+                                    </div>
+                                    {openFolders.includes(folder.id) && (
+                                        <div className="folder-content">
+                                            {folder.boards.map(board => (
+                                                <NavLink
+                                                    key={board.id}
+                                                    to={getBoardPath(board.name || board)}
+                                                    className={({ isActive }) => `board-item ${isActive ? 'active' : ''}`}
+                                                    onClick={handleLinkClick}
+                                                >
+                                                    <LayoutDashboard size={18} color="#00d1d1" />
+                                                    <span>{board.name}</span>
+                                                </NavLink>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                            ))}
                         </div>
-                    ))}
-                    {isCollapsed && boardFolders?.map(folder => (
-                        <div key={folder.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                            <div title={folder.name}>
-                                <Folder size={20} color="#ffcb00" fill="#ffcb00" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
 
-                <div className="nav-section">
-                    <div className="section-label">Tools</div>
-                    <NavLink
-                        to="/forms"
-                        className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-                        onClick={handleLinkClick}
-                    >
-                        <FileText size={20} />
-                        {!isCollapsed && <span>Forms</span>}
-                    </NavLink>
-                    <NavLink
-                        to="/users"
-                        className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-                        onClick={handleLinkClick}
-                    >
-                        <Users size={20} />
-                        {!isCollapsed && <span>Users & Roles</span>}
-                    </NavLink>
-                    <NavLink
-                        to="/files"
-                        className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-                        onClick={handleLinkClick}
-                    >
-                        <File size={20} />
-                        {!isCollapsed && <span>Files</span>}
-                    </NavLink>
-                </div>
+                        <div className="nav-section">
+                            <div className="section-label">Tools</div>
+                            <NavLink
+                                to="/forms"
+                                className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+                                onClick={handleLinkClick}
+                            >
+                                <FileText size={20} />
+                                {!isCollapsed && <span>Forms</span>}
+                            </NavLink>
+                            <NavLink
+                                to="/users"
+                                className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+                                onClick={handleLinkClick}
+                            >
+                                <Users size={20} />
+                                {!isCollapsed && <span>Users & Roles</span>}
+                            </NavLink>
+                            <NavLink
+                                to="/files"
+                                className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+                                onClick={handleLinkClick}
+                            >
+                                <File size={20} />
+                                {!isCollapsed && <span>Files</span>}
+                            </NavLink>
+                        </div>
+                    </>
+                )}
             </div>
 
-            <div className="sidebar-footer">
-                <NavLink
-                    to="/settings"
-                    className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-                    onClick={handleLinkClick}
-                >
-                    <SettingsIcon size={20} />
-                    {!isCollapsed && <span>Settings</span>}
-                </NavLink>
-            </div>
+            {isAdmin && (
+                <div className="sidebar-footer">
+                    <NavLink
+                        to="/settings"
+                        className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+                        onClick={handleLinkClick}
+                    >
+                        <SettingsIcon size={20} />
+                        {!isCollapsed && <span>Settings</span>}
+                    </NavLink>
+                </div>
+            )}
         </aside>
     );
 };

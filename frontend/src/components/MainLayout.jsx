@@ -57,7 +57,18 @@ const MainLayout = ({ children }) => {
             });
 
             // Filter out empty folders if desired, or keep them. keeping them is fine.
-            const sortedFolders = Object.values(foldersMap).filter(f => f.boards.length > 0 || folderOrder.includes(f.name));
+            let sortedFolders = Object.values(foldersMap).filter(f => f.boards.length > 0 || folderOrder.includes(f.name));
+
+            // Personalization: If not Admin, only show boards where user has items
+            if (user?.role !== 'Admin') {
+                sortedFolders = sortedFolders.map(folder => ({
+                    ...folder,
+                    boards: folder.boards.filter(board => {
+                        const groups = board.Groups || board.groups || [];
+                        return groups.some(g => (g.items || []).some(i => i.assignedToId === user.id));
+                    })
+                })).filter(folder => folder.boards.length > 0);
+            }
 
             // Sort folders by predefined order
             sortedFolders.sort((a, b) => {
@@ -231,6 +242,7 @@ const MainLayout = ({ children }) => {
                 onCreateBoard={toggleCreateModal}
                 boardFolders={boardFolders}
                 unreadCount={unreadCount}
+                user={user}
             />
 
             <div className="layout-main">

@@ -453,6 +453,44 @@ const FormsBuilder = () => {
                 .toggle-setting { display: flex; items-align: center; justify-content: space-between; margin-top: 8px; }
                 .empty-settings { color: #676879; font-size: 14px; text-align: center; margin-top: 40px; }
                 .end-drop-zone { height: 40px; transition: all 0.2s; }
+
+                /* --- Responsive Design --- */
+                @media (max-width: 1024px) {
+                    .builder-sidebar.left { width: 220px; }
+                    .builder-sidebar.right { width: 260px; }
+                }
+
+                @media (max-width: 768px) {
+                    .builder-layout { flex-direction: column; overflow-y: auto; }
+                    .builder-sidebar { width: 100% !important; height: auto; border: none; border-bottom: 1px solid #e1e1e1; }
+                    .builder-sidebar.left { order: 2; padding-bottom: 24px; }
+                    .builder-sidebar.right { order: 3; padding-bottom: 40px; }
+                    .builder-canvas-area { order: 1; height: auto; overflow: visible; background: #fff; }
+                    .canvas-scroller { padding: 16px; height: auto; }
+                    .form-canvas { max-width: 100%; box-shadow: none; border: 1px solid #e1e1e1; }
+                    
+                    .field-types-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 24px; }
+                    .field-type-item { margin-bottom: 0; }
+                    
+                    .builder-header { padding: 0 12px; }
+                    .header-titles h1 { font-size: 14px; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                    .header-actions { gap: 8px; }
+                    .action-btn, .primary-btn { padding: 6px 10px; font-size: 12px; }
+
+                    .form-header-edit { padding: 24px 20px 12px; }
+                    .title-input { font-size: 24px; }
+                    .canvas-fields { padding: 12px 20px; }
+                    .form-body-preview { padding: 0 20px 40px; }
+                    .form-header-preview { padding: 24px 20px; }
+                    .form-header-preview h1 { font-size: 24px; }
+                }
+
+                @media (max-width: 480px) {
+                    .field-types-list { grid-template-columns: 1fr; }
+                    .header-titles { display: flex; flex-direction: column; gap: 2px; }
+                    .badge { margin-left: 0; width: fit-content; }
+                    .primary-btn span { display: none; }
+                }
             `}</style>
         </div>
     );

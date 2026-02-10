@@ -39,6 +39,7 @@ export const userService = {
 
 export const boardService = {
   getAllBoards: () => api.get('/boards'),
+  getAllTasks: () => api.get('/boards?all=true'),
   createBoard: (boardData) => api.post('/boards', boardData),
   createGroup: (boardId, groupData) => api.post(`/boards/${boardId}/groups`, groupData),
 };

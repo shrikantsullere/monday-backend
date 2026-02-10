@@ -290,13 +290,17 @@ const Topbar = ({ onMobileMenuClick, unreadCount = 0, onRefreshNotifications }) 
         }
 
         @media (max-width: 768px) {
+            .hide-mobile { display: none !important; }
+            .topbar-right { gap: 4px; }
+            .icon-btn { padding: 4px; width: 28px; height: 28px; }
+            .user-avatar { width: 28px; height: 28px; font-size: 12px; }
             .mobile-logo-container {
                 display: flex;
                 align-items: center;
                 gap: 8px;
                 color: var(--text-main);
                 font-weight: 800;
-                font-size: 1.2rem;
+                font-size: 0.9rem;
             }
         }
     `;
@@ -412,22 +416,22 @@ const Topbar = ({ onMobileMenuClick, unreadCount = 0, onRefreshNotifications }) 
                 </button>
 
                 <button className="icon-btn hide-mobile" title="Settings" onClick={() => navigate('/settings')}>
-                    <Settings icon size={20} />
+                    <Settings size={20} />
                 </button>
 
                 <div className="user-avatar-wrap" ref={userMenuRef}>
                     <button
                         type="button"
                         className="user-avatar"
-                        title={`${user?.username || ''} (${user?.role || ''})`}
+                        title={`${user?.name || ''} (${user?.role || ''})`}
                         onClick={() => setUserMenuOpen((o) => !o)}
                     >
-                        {(user?.username || 'U').charAt(0).toUpperCase()}
+                        {(user?.name || 'U').charAt(0).toUpperCase()}
                     </button>
                     {userMenuOpen && (
                         <div className="user-menu-dropdown">
                             <div className="user-menu-header">
-                                <div className="user-menu-name">{user?.username}</div>
+                                <div className="user-menu-name">{user?.name}</div>
                                 <div className="user-menu-role">{user?.role}</div>
                             </div>
                             <button

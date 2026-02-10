@@ -10,7 +10,7 @@ import CalendarView from './CalendarView';
 import { boardService, itemService, userService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
-const Board = () => {
+const Board = ({ isTeamView = false }) => {
     const { id: boardId } = useParams();
     const { user: currentUser } = useAuth();
     const location = useLocation();
@@ -67,7 +67,7 @@ const Board = () => {
         setIsLoading(true);
         try {
             const [boardsRes, usersRes] = await Promise.all([
-                boardService.getAllBoards(),
+                isTeamView ? boardService.getAllTasks() : boardService.getAllBoards(),
                 userService.getAllUsers()
             ]);
 
@@ -320,6 +320,11 @@ const Board = () => {
         return groupsRes.map(group => {
             let items = [...(group.items || [])];
 
+            // 0. Strict task isolation: Regular Users only see their assigned items. Admins see everything.
+            if (currentUser?.role !== 'Admin') {
+                items = items.filter(item => item.assignedToId === currentUser?.id);
+            }
+
             // 1. Search filter
             if (searchTerm) {
                 const s = searchTerm.toLowerCase();
@@ -360,7 +365,7 @@ const Board = () => {
 
             return { ...group, items };
         });
-    }, [boardData, searchTerm, selectedPersonIds, statusFilter, sortBy, allUsers]);
+    }, [boardData, searchTerm, selectedPersonIds, statusFilter, sortBy, allUsers, currentUser, isTeamView]);
 
     const visibleColumns = useMemo(() => {
         return columns.filter(col => !hiddenColumnIds.includes(col.id));
@@ -452,6 +457,22 @@ const Board = () => {
                 
                 .spin { animation: spin 1s linear infinite; }
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+                @media (max-width: 768px) {
+                    .board-header { padding: 16px 16px 0 16px; }
+                    .board-title h1 { font-size: 24px; }
+                    .board-action-bar { flex-direction: column; align-items: flex-start; gap: 12px; }
+                    .action-left { width: 100%; flex-direction: column; align-items: stretch; }
+                    .search-field { width: 100%; }
+                    .search-field input { width: 100%; }
+                    .action-right { width: 100%; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+                    .action-right::-webkit-scrollbar { display: none; }
+                    .board-sub-actions { padding: 8px 16px; flex-wrap: wrap; }
+                    .board-content { padding: 12px !important; }
+                    .board-tabs { overflow-x: auto; scrollbar-width: none; }
+                    .board-tabs::-webkit-scrollbar { display: none; }
+                    .tab-btn { white-space: nowrap; padding: 8px 12px; }
+                }
             `}</style>
 
             <input
@@ -465,7 +486,7 @@ const Board = () => {
             <div className="board-header">
                 <div className="board-title-row">
                     <div className="board-title">
-                        <h1>{boardData.name}</h1>
+                        <h1>{isTeamView ? 'Team Work Distribution' : boardData.name}</h1>
                         <Star size={24} className="star-icon" />
                     </div>
                     <div className="board-header-right">

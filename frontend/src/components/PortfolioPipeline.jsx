@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Plus, Search, AlertTriangle, CheckCircle, Clock, Download, Upload, Loader2 } from 'lucide-react';
 import { boardService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const PortfolioPipeline = () => {
     const navigate = useNavigate();
+    const { user: currentUser } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [boards, setBoards] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -34,6 +36,9 @@ const PortfolioPipeline = () => {
         groups.forEach(group => {
             const items = group.items || [];
             items.forEach(item => {
+                // Strict task isolation
+                if (item.assignedToId !== currentUser?.id) return;
+
                 totalItems++;
                 const status = (item.status || '').toLowerCase();
                 if (status.includes('done') || status.includes('won') || status.includes('closed') || status === 'production') {
@@ -48,9 +53,12 @@ const PortfolioPipeline = () => {
         return { totalItems, activeItems, completedItems, overdueItems, progress };
     };
 
-    const filteredBoards = boards.filter(board =>
-        board.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredBoards = boards.filter(board => {
+        const matchesSearch = board.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const stats = getBoardStats(board);
+        // Only show board if it has tasks for the user
+        return matchesSearch && stats.totalItems > 0;
+    });
 
     const pipelineStyles = `
         .pipeline-container { padding: 32px; height: 100%; overflow-y: auto; background: var(--bg-page); color: var(--text-main); }
