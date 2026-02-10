@@ -8,7 +8,7 @@ const { Op } = require('sequelize');
 // @desc    Search across all boards and items
 router.get('/', auth, async (req, res) => {
   const { q } = req.query;
-  if (!q) return res.json({ boards: [], items: [] });
+  if (!q) return res.json({ boards: [], items: [], users: [] });
 
   try {
     const boards = await Board.findAll({
@@ -19,7 +19,8 @@ router.get('/', auth, async (req, res) => {
 
     const items = await Item.findAll({
       where: {
-        name: { [Op.like]: `%${q}%` }
+        name: { [Op.like]: `%${q}%` },
+        assignedToId: req.user.id
       },
       include: [
         {
@@ -29,7 +30,17 @@ router.get('/', auth, async (req, res) => {
       ]
     });
 
-    res.json({ boards, items });
+    const users = await User.findAll({
+      where: {
+        [Op.or]: [
+          { name: { [Op.like]: `%${q}%` } },
+          { email: { [Op.like]: `%${q}%` } }
+        ]
+      },
+      attributes: ['id', 'name', 'email', 'avatar', 'role']
+    });
+
+    res.json({ boards, items, users });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server error');

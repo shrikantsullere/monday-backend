@@ -32,7 +32,17 @@ const upload = multer({
 router.get('/', auth, async (req, res) => {
   try {
     if (req.user.role !== 'Admin') return res.status(403).json({ msg: 'Access denied' });
-    const users = await User.findAll({ attributes: { exclude: ['password'] } });
+    const { Item, Group, Board } = require('../models');
+    const users = await User.findAll({
+      attributes: { exclude: ['password'] },
+      include: [{
+        model: Item,
+        include: [{
+          model: Group,
+          include: [{ model: Board }]
+        }]
+      }]
+    });
     res.json(users);
   } catch (err) {
     res.status(500).send('Server error');
@@ -53,9 +63,18 @@ router.post('/upload-avatar', auth, upload.single('avatar'), (req, res) => {
 // @route   PUT api/users/profile
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { name, phone, address, avatar } = req.body;
+    const { name, email, phone, address, avatar } = req.body;
     const user = await User.findByPk(req.user.id);
     if (!user) return res.status(404).json({ msg: 'User not found' });
+
+    // If email is changing, check if new email is already taken
+    if (email && email !== user.email) {
+      const emailExists = await User.findOne({ where: { email } });
+      if (emailExists) {
+        return res.status(400).json({ msg: 'Email is already taken' });
+      }
+      user.email = email;
+    }
 
     // Only update fields that are provided
     if (name) user.name = name;

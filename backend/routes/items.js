@@ -8,7 +8,7 @@ const { Item, Notification, Group, Board, User } = require('../models');
 router.get('/my', auth, async (req, res) => {
   try {
     const items = await Item.findAll({
-      // Return all items for now as requested to show workspace work
+      where: { assignedToId: req.user.id },
       include: [
         {
           model: Group,

@@ -6,21 +6,34 @@ const { Board, Group, Item, User } = require('../models');
 // @route   GET api/boards
 router.get('/', auth, async (req, res) => {
   try {
+    // Admins see everything by default, Users only see assigned tasks
+    const showAll = req.user.role === 'Admin';
     const boards = await Board.findAll({
       include: [{
         model: Group,
         as: 'Groups',
+        required: false, // Keep Groups even if empty, but filter them if they shouldn't exist?
+        // Actually, if we want to filter BOARDS, we should use required: !showAll on the items and groups.
         include: [{
           model: Item,
           as: 'items',
+          where: showAll ? {} : { assignedToId: req.user.id },
+          required: false, // Keep this false to let frontend handle empty groups if board is valid?
+          // No, if we want to filter the BOARD itself, we need at least one level to be required.
           include: [
             { model: Item, as: 'subItems' },
-            { model: User, as: 'assignedUser', attributes: ['name', 'avatar'] }
+            { model: User, as: 'assignedUser', attributes: ['name', 'email', 'avatar'] }
           ]
         }]
       }]
     });
-    res.json(boards);
+
+    // Filter boards in JS for better control if required: true is too noisy
+    const filteredBoards = showAll ? boards : boards.filter(board => {
+      return board.Groups.some(group => group.items && group.items.length > 0);
+    });
+
+    res.json(filteredBoards);
   } catch (err) {
     console.error(err);
     res.status(500).send('Server error');
