@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     ChevronDown, ChevronRight, User as UserIcon, Plus, GripVertical,
     MoreHorizontal, Check, X, Search, Loader2, Play, Circle, Calendar, Trash2
@@ -253,14 +253,21 @@ const Table = ({
 
     // ... (inside Table component)
     const [newItemData, setNewItemData] = useState({ name: '' });
+    const addItemInputRef = useRef(null);
 
     const handleAddItemKeyDown = (e) => {
         if (e.key === 'Enter' && newItemData.name?.trim()) {
+            const cleanData = { ...newItemData };
+            // Ensure numeric fields are not sent as empty strings
+            if (cleanData.progress === '') delete cleanData.progress;
+            if (cleanData.payment === '') delete cleanData.payment;
+            // Ensure 0 is preserved but empty string is removed/ignored
+
             onAddItem(group.id, {
                 name: newItemData.name,
                 status: 'Working on it',
                 GroupId: group.id,
-                ...newItemData
+                ...cleanData
             });
             setNewItemData({ name: '' });
         }
@@ -339,6 +346,7 @@ const Table = ({
                                                 <div style={{ display: 'flex', alignItems: 'center', height: '100%', padding: '0 8px', gap: '12px' }}>
                                                     <ChevronRight size={14} color="#676879" />
                                                     <input
+                                                        ref={addItemInputRef}
                                                         className="add-item-input"
                                                         placeholder="Add Item"
                                                         value={newItemData.name || ''}
@@ -347,14 +355,145 @@ const Table = ({
                                                         style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent' }}
                                                     />
                                                 </div>
-                                            ) : idx === 1 ? (
-                                                <div className="person-cell" style={{ opacity: 0.5 }}>
-                                                    <div className="avatar-small" style={{ background: '#676879' }}>U</div>
-                                                    <span className="person-name">Unassigned</span>
+                                            ) : col.type === 'person' ? (
+                                                <div className="person-cell-wrapper" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                    setActiveMenu({ itemId: 'creation', colId: col.id, type: 'person', rect });
+                                                }}>
+                                                    <div className="person-cell" style={{ justifyContent: 'flex-start', paddingLeft: '12px', gap: '8px' }}>
+                                                        {newItemData.assignedToId ? (
+                                                            (() => {
+                                                                const assignedUser = allUsers.find(u => u.id === newItemData.assignedToId);
+                                                                return assignedUser ? (
+                                                                    <>
+                                                                        <div className="avatar-small" title={assignedUser.name}>{assignedUser.name[0]}</div>
+                                                                        <span className="person-name">{assignedUser.name}</span>
+                                                                    </>
+                                                                ) : <span className="person-name">Unknown</span>;
+                                                            })()
+                                                        ) : (
+                                                            <>
+                                                                <div className="avatar-small" style={{ background: '#676879' }}>U</div>
+                                                                <span className="person-name">Unassigned</span>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                    {activeMenu?.itemId === 'creation' && activeMenu?.colId === col.id && activeMenu.type === 'person' && (
+                                                        <div className="popover person-popover" style={{ top: activeMenu.rect.bottom + 4, left: activeMenu.rect.left }}>
+                                                            <div className="popover-search">
+                                                                <Search size={14} />
+                                                                <input placeholder="Search names..." value={personSearch} onChange={e => setPersonSearch(e.target.value)} onClick={e => e.stopPropagation()} />
+                                                            </div>
+                                                            <div className="popover-list">
+                                                                {allUsers.filter(u => u.name.toLowerCase().includes(personSearch.toLowerCase())).map(u => (
+                                                                    <div key={u.id} className="popover-item" onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setNewItemData(prev => ({ ...prev, assignedToId: u.id }));
+                                                                        setActiveMenu(null);
+                                                                    }}>
+                                                                        <div className="avatar-small">{u.name[0]}</div>
+                                                                        {u.name}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            ) : idx === 2 ? (
-                                                <div className="status-cell-wrapper" style={{ opacity: 0.5 }}>
-                                                    <div className="status-cell" style={{ background: '#fdab3d' }}>Working on it</div>
+                                            ) : col.type === 'status' || col.type === 'priority' || col.type === 'risk' ? (
+                                                <div className="status-cell-wrapper" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                    setActiveMenu({ itemId: 'creation', colId: col.id, type: col.type, rect });
+                                                }}>
+                                                    {(() => {
+                                                        const val = newItemData[col.id] || (col.type === 'status' ? 'Working on it' : '-');
+                                                        const opts = col.type === 'status' ? statusOptions : (col.type === 'priority' ? priorityOptions : riskOptions);
+                                                        const currentOpt = opts?.find(o => o.label === val) || { label: val, color: '#c4c4c4' };
+                                                        return (
+                                                            <>
+                                                                <div className="status-cell" style={{ background: currentOpt.color || '#c4c4c4' }}>{val}</div>
+                                                                {activeMenu?.itemId === 'creation' && activeMenu?.colId === col.id && activeMenu.type === col.type && (
+                                                                    <div className="popover status-popover" style={{ top: activeMenu.rect.bottom + 4, left: activeMenu.rect.left }}>
+                                                                        {opts?.map(opt => (
+                                                                            <div key={opt.label} className="popover-item" onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleNewItemChange(col.id, opt.label);
+                                                                                setActiveMenu(null);
+                                                                            }}>
+                                                                                <div className="status-color-dot" style={{ background: opt.color }}></div>
+                                                                                {opt.label}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            ) : col.type === 'date' ? (
+                                                <div className="date-cell-container" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '0 12px', height: '100%' }}>
+                                                    <span style={{ color: '#e2445c', fontSize: '13px' }}>{newItemData[col.id] ? new Date(newItemData[col.id]).toLocaleDateString() : '-'}</span>
+                                                    <Calendar size={14} color="#e2445c" />
+                                                    <input
+                                                        type="date"
+                                                        value={formatDateForInput(newItemData[col.id])}
+                                                        onChange={(e) => handleNewItemChange(col.id, e.target.value)}
+                                                        style={{ position: 'absolute', opacity: 0, inset: 0, cursor: 'pointer' }}
+                                                    />
+                                                </div>
+                                            ) : col.type === 'timeline' ? (
+                                                <div className="date-cell-container" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '0 12px', height: '100%' }}>
+                                                    <span style={{ fontSize: '13px' }}>{newItemData[col.id] || '-'}</span>
+                                                    <Calendar size={14} color="#676879" />
+                                                    <input
+                                                        type="date"
+                                                        value={formatDateForInput(newItemData[col.id]?.split(' - ')[0] || newItemData[col.id])}
+                                                        onChange={(e) => handleNewItemChange(col.id, e.target.value)}
+                                                        style={{ position: 'absolute', opacity: 0, inset: 0, cursor: 'pointer' }}
+                                                    />
+                                                </div>
+                                            ) : col.type === 'payment' ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', height: '100%', color: '#323338', padding: '0 12px', position: 'relative' }}>
+                                                    <span style={{ fontSize: '13px', color: '#676879', position: 'absolute', left: '20px' }}>$</span>
+                                                    <input
+                                                        type="number"
+                                                        className="text-input-cell"
+                                                        placeholder="0.00"
+                                                        value={newItemData[col.id] || ''}
+                                                        onChange={(e) => handleNewItemChange(col.id, e.target.value)}
+                                                        style={{ textAlign: 'center', paddingLeft: '20px' }}
+                                                    />
+                                                </div>
+                                            ) : col.type === 'progress' ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px', height: '100%', width: '100%' }}>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        className="text-input-cell"
+                                                        placeholder="0"
+                                                        value={newItemData[col.id] || ''}
+                                                        onChange={(e) => handleNewItemChange(col.id, e.target.value)}
+                                                        style={{ width: '40px', textAlign: 'right' }}
+                                                    />
+                                                    <span style={{ fontSize: '12px', color: '#676879' }}>%</span>
+                                                </div>
+                                            ) : col.type === 'time_tracking' ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', height: '100%' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#323338' }}>
+                                                        <Circle size={14} color="#676879" />
+                                                        <input
+                                                            className="text-input-cell"
+                                                            placeholder="00:00:00"
+                                                            value={newItemData[col.id] || ''}
+                                                            onChange={(e) => handleNewItemChange(col.id, e.target.value)}
+                                                            style={{ width: '60px', textAlign: 'center' }}
+                                                        />
+                                                    </div>
+                                                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#c4c4c4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <Play size={12} fill="#fff" color="#fff" />
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <div style={{ height: '100%', background: '#fff' }}></div>
@@ -364,7 +503,7 @@ const Table = ({
                                     <td style={{ borderRight: 'none' }}></td>
                                 </tr>
                                 {/* Footer / Total Row */}
-                                <tr className="add-item-link-row" onClick={() => onAddItem(group.id)}>
+                                <tr className="add-item-link-row" onClick={() => addItemInputRef.current?.focus()}>
                                     <td style={{ padding: '8px 48px', color: '#0085ff', cursor: 'pointer', fontSize: '14px', borderRight: 'none' }}>
                                         + Add Item
                                     </td>
@@ -417,7 +556,10 @@ const Table = ({
         .timeline-cell-wrapper { width: 100%; height: 100%; padding: 4px; cursor: pointer; }
         .timeline-cell { display: flex; align-items: center; justify-content: center; height: 100%; }
 
-        .popover { position: fixed; background: #fff; border-radius: 8px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); border: 1px solid #e1e1e1; z-index: 1000; overflow: hidden; }
+        .popover { position: fixed; background: #fff; border-radius: 8px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); border: 1px solid #e1e1e1; z-index: 1000; overflow: hidden; display: flex; flex-direction: column; }
+        .popover-search { padding: 8px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 8px; }
+        .popover-search input { border: none; outline: none; flex: 1; font-size: 13px; }
+        .popover-list { max-height: 200px; overflow-y: auto; }
         .popover-item { padding: 10px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: background 0.2s; font-size: 14px; color: #323338; }
         .popover-item:hover { background: #f5f6f8; }
         

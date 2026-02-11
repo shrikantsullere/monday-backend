@@ -116,7 +116,7 @@ const PortfolioPipeline = () => {
                         <div key={board.id} className="board-card" onClick={() => navigate(`/board/${board.id}`)}>
                             <div className="board-card-header">
                                 <div className="board-icon"><LayoutDashboard size={20} /></div>
-                                <h3 style={{ margin: 0 }}>{board.name}</h3>
+                                <h3 style={{ margin: 0 }}>{board.name === 'Project Pipeline' ? 'SIRA Projects' : board.name}</h3>
                             </div>
 
                             <div className="board-stats">

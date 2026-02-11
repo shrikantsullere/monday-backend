@@ -90,7 +90,7 @@ const Board = ({ isTeamView = false }) => {
                 setBoardData(currentBoard);
 
                 // Force columns for SIRA Projects to match user image perfectly
-                if (currentBoard.name === 'SIRA Projects' || currentBoard.name === 'Commercial - SIRA') {
+                if (currentBoard.name === 'SIRA Projects' || currentBoard.name === 'Commercial - SIRA' || currentBoard.name === 'Project Pipeline') {
                     setColumns(defaultColumns);
                 } else if (currentBoard.columns) {
                     try {
@@ -486,7 +486,7 @@ const Board = ({ isTeamView = false }) => {
             <div className="board-header">
                 <div className="board-title-row">
                     <div className="board-title">
-                        <h1>{isTeamView ? 'Team Work Distribution' : boardData.name}</h1>
+                        <h1>{isTeamView ? 'Team Work Distribution' : (boardData.name === 'Project Pipeline' ? 'SIRA Projects' : boardData.name)}</h1>
                         <Star size={24} className="star-icon" />
                     </div>
                     <div className="board-header-right">
